@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WatchParty — Смотри с друзьями</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-primary: #0a0a1a;
+    --bg-secondary: #12122a;
+    --bg-tertiary: #1a1a35;
+    --bg-card: rgba(255, 255, 255, 0.04);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0c0;
+    --text-muted: #6a6a8a;
+    --accent-1: #8b5cf6;
+    --accent-2: #ec4899;
+    --accent-3: #3b82f6;
+    --gradient-main: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    --gradient-blue: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    --gradient-warm: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.18);
+    --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.3);
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    animation: bgShift 20s ease-in-out infinite;
+  }
+  @keyframes bgShift {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-5%, -3%); }
+  }
+  #app {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* ===== HEADER ===== */
+  header {
+    display: flex;
+    align-items: center;
+    padding: 16px 32px;
+    background: rgba(10, 10, 26, 0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    gap: 32px;
+    flex-shrink: 0;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    cursor: pointer;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--gradient-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--shadow-glow);
+  }
+  .logo-text {
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  nav {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+  }
+  .nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-btn:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+  .nav-btn.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+  .nav-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -17px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 2px;
+    background: var(--gradient-main);
+    border-radius: 2px;
+  }
+  .nav-btn { position: relative; }
+  .search-box {
+    position: relative;
+    width: 280px;
+  }
+  .search-box input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 16px 10px 40px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-box input:focus {
+    border-color: var(--accent-1);
+    background: rgba(139, 92, 246, 0.08);
+  }
+  .search-box::before {
+    content: '🔍';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    opacity: 0.6;
+  }
+  .user-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--gradient-warm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .user-avatar:hover {
+    border-color: var(--accent-2);
+    transform: scale(1.05);
+  }
+  /* ===== MAIN CONTENT ===== */
+  main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+  }
+  .screen { display: none; padding: 32px; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* ===== HOME SCREEN ===== */
+  .hero {
+    position: relative;
+    height: 420px;
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, #1a1a35 0%, #0a0a1a 100%);
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.6);
+    transition: opacity 0.6s;
+  }
+  .hero-content {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 40px;
+    background: linear-gradient(to top, rgba(10, 10, 26, 0.95) 0%, transparent 100%);
+    z-index: 2;
+  }
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--gradient-main);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  .hero-title {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 6px; }
+  .hero-desc {
+    color: var(--text-secondary);
+    font-size: 15px;
+    max-width: 600px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--gradient-main);
+    color: white;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6);
+  }
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-title .see-all {
+    font-size: 14px;
+    color: var(--accent-1);
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .content-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    margin-bottom: 40px;
+    scrollbar-width: thin;
+  }
+  .content-row::-webkit-scrollbar { height: 6px; }
+  .content-row::-webkit-scrollbar-track { background: transparent; }
+  .content-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .content-card {
+    flex-shrink: 0;
+    width: 200px;
+    cursor: pointer;
+    transition: transform 0.3s;
+    position: relative;
+  }
+  .content-card:hover {
+    transform: translateY(-8px);
+  }
+  .card-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-tertiary);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .card-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s;
+  }
+  .content-card:hover .card-poster img {
+    transform: scale(1.08);
+  }
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+  }
+  .content-card:hover .card-overlay {
+    opacity: 1;
+  }
+  .play-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--gradient-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .content-card:hover .play-icon { opacity: 1; }
+  .card-rating {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-info {
+    padding: 12px 4px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  /* ===== ROOM SCREEN ===== */
+  .room-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    height: calc(100vh - 100px);
+    padding: 0 !important;
+  }
+  .room-main {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+    overflow: hidden;
+  }
+  .room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+  }
+  .room-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .room-live-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 10px var(--danger);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+  }
+  .room-info h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .room-info p {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .room-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .icon-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover {
+    background: var(--accent-1);
+    border-color: var(--accent-1);
+  }
+  .video-container {
+    flex: 1;
+    background: black;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    min-height: 0;
+  }
+  .video-container iframe,
+  .video-container .video-placeholder {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  .video-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a35 0%, #0a0a1a 100%);
+    color: var(--text-secondary);
+    gap: 16px;
+  }
+  .video-placeholder-icon {
+    font-size: 64px;
+    opacity: 0.5;
+  }
+  .video-controls {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(20px);
+    align-items: center;
+  }
+  .control-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .control-btn:hover {
+    background: var(--bg-tertiary);
+  }
+  .control-btn.primary {
+    background: var(--gradient-main);
+    width: 48px; height: 48px;
+    font-size: 20px;
+  }
+  .video-url-input {
+    flex: 1;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .video-url-input:focus {
+    border-color: var(--accent-1);
+  }
+  .viewers-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+  }
+  .viewers-avatars {
+    display: flex;
+  }
+  .viewer-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+    margin-left: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+  }
+  .viewer-avatar:first-child { margin-left: 0; }
+  .viewers-count {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-left: 8px;
+  }
+  /* ===== CHAT ===== */
+  .chat-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 20px 20px 20px 0;
+  }
+  .chat-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .chat-messages::-webkit-scrollbar { width: 6px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .chat-msg {
+    display: flex;
+    gap: 10px;
+    animation: msgIn 0.3s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+  }
+  .msg-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .msg-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .msg-name {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .msg-time {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .msg-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+  .msg-system {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 8px;
+    font-style: italic;
+  }
+  .chat-input-wrap {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input {
+    flex: 1;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .chat-input:focus {
+    border-color: var(--accent-1);
+  }
+  .send-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--gradient-main);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+  .send-btn:hover { transform: scale(1.05); }
+  /* ===== FRIENDS SCREEN ===== */
+  .friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .friend-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    backdrop-filter: blur(20px);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .friend-card:hover {
+    border-color: var(--accent-1);
+    transform: translateY(-2px);
+  }
+  .friend-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .friend-status {
+    position: absolute;
+    bottom: 2px; right: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+  }
+  .friend-status.online { background: var(--success); }
+  .friend-status.offline { background: var(--text-muted); }
+  .friend-info { flex: 1; min-width: 0; }
+  .friend-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .friend-activity {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .friend-activity.watching {
+    color: var(--success);
+  }
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.2s;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalIn 0.3s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .modal-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .modal-close {
+    background: var(--bg-tertiary);
+    border: none;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .form-group {
+    margin-bottom: 18px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--accent-1);
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+  /* ===== TOAST ===== */
+  .toast-container {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toast {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent-1);
+    padding: 14px 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    animation: toastIn 0.3s ease;
+    min-width: 280px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .toast.hide {
+    animation: toastOut 0.3s ease forwards;
+  }
+  @keyframes toastOut {
+    to { opacity: 0; transform: translateX(100px); }
+  }
+  .toast-icon { font-size: 20px; }
+  .toast-text { font-size: 14px; }
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    header { padding: 12px 16px; gap: 12px; }
+    .search-box { width: 180px; }
+    .nav-btn { padding: 8px 12px; font-size: 13px; }
+    .room-layout { grid-template-columns: 1fr; }
+    .chat-panel { margin: 0 16px 16px; height: 400px; }
+    .hero-title { font-size: 32px; }
+    .hero { height: 340px; }
+    .screen { padding: 16px; }
+  }
+  @media (max-width: 600px) {
+    .search-box { display: none; }
+    .nav-btn span { display: none; }
+    .hero-title { font-size: 24px; }
+    .hero-desc { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="logo" onclick="showScreen('home')">
+      <div class="logo-icon">🎬</div>
+      <span class="logo-text">WatchParty</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-screen="home" onclick="showScreen('home')">🏠 <span>Главная</span></button>
+      <button class="nav-btn" data-screen="room" onclick="showScreen('room')">🎥 <span>Комната</span></button>
+      <button class="nav-btn" data-screen="friends" onclick="showScreen('friends')">👥 <span>Друзья</span></button>
+    </nav>
+    <div class="search-box">
+      <input type="text" placeholder="Поиск фильмов и сериалов..." id="searchInput" oninput="handleSearch(this.value)">
+    </div>
+    <div class="user-avatar" onclick="showToast('👋 Привет, Гость!')">Г</div>
+  </header>
+
+  <main>
+    <!-- HOME SCREEN -->
+    <div class="screen active" id="screen-home">
+      <div class="hero" id="hero">
+        <div class="hero-bg" id="heroBg"></div>
+        <div class="hero-content">
+          <span class="hero-badge" id="heroBadge">🔥 Рекомендуем</span>
+          <h1 class="hero-title" id="heroTitle"></h1>
+          <div class="hero-meta" id="heroMeta"></div>
+          <p class="hero-desc" id="heroDesc"></p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="watchFeatured()">▶ Смотреть с друзьями</button>
+            <button class="btn btn-secondary" onclick="showToast('ℹ️ Добавлено в список')">+ В список</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <span>🔥 Популярное сейчас</span>
+        <span class="see-all">Все →</span>
+      </div>
+      <div class="content-row" id="trendingRow"></div>
+
+      <div class="section-title">
+        <span>🎬 Фильмы</span>
+        <span class="see-all">Все →</span>
+      </div>
+      <div class="content-row" id="moviesRow"></div>
+
+      <div class="section-title">
+        <span>📺 Сериалы</span>
+        <span class="see-all">Все →</span>
+      </div>
+      <div class="content-row" id="seriesRow"></div>
+
+      <div class="section-title">
+        <span>✨ Новинки</span>
+        <span class="see-all">Все →</span>
+      </div>
+      <div class="content-row" id="newRow"></div>
+    </div>
+
+    <!-- ROOM SCREEN -->
+    <div class="screen" id="screen-room">
+      <div class="room-layout">
+        <div class="room-main">
+          <div class="room-header">
+            <div class="room-title-wrap">
+              <div class="room-live-dot"></div>
+              <div class="room-info">
+                <h2 id="roomTitle">Комната: Киновечер</h2>
+                <p id="roomDesc">Смотрим вместе · Код: <strong id="roomCode">ABCD1234</strong></p>
+              </div>
+            </div>
+            <div class="room-actions">
+              <button class="icon-btn" onclick="copyRoomCode()" title="Скопировать код">🔗</button>
+              <button class="icon-btn" onclick="inviteFriends()" title="Пригласить">👥</button>
+              <button class="icon-btn" onclick="leaveRoom()" title="Выйти">🚪</button>
+            </div>
+          </div>
+
+          <div class="video-container" id="videoContainer">
+            <div class="video-placeholder" id="videoPlaceholder">
+              <div class="video-placeholder-icon">🎥</div>
+              <div style="font-size: 18px; font-weight: 600;">Выберите видео для просмотра</div>
+              <div style="font-size: 14px;">Вставьте ссылку на YouTube ниже или выберите из каталога</div>
+            </div>
+          </div>
+
+          <div class="video-controls">
+            <button class="control-btn" onclick="videoAction('back')" title="Назад 10с">⏪</button>
+            <button class="control-btn primary" onclick="videoAction('play')" id="playBtn" title="Пауза/Воспроизведение">▶</button>
+            <button class="control-btn" onclick="videoAction('forward')" title="Вперёд 10с">⏩</button>
+            <input type="text" class="video-url-input" id="videoUrlInput" placeholder="Вставьте ссылку YouTube или ID видео...">
+            <button class="btn btn-primary" onclick="loadVideo()" style="padding: 10px 20px;">Загрузить</button>
+          </div>
+
+          <div class="viewers-strip">
+            <div class="viewers-avatars" id="viewersAvatars"></div>
+            <span class="viewers-count" id="viewersCount">4 зрителя</span>
+          </div>
+        </div>
+
+        <div class="chat-panel">
+          <div class="chat-header">
+            <h3>💬 Чат комнаты</h3>
+            <span style="font-size: 12px; color: var(--text-muted);">Онлайн: <span id="onlineCount">4</span></span>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input-wrap">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter')sendMessage()">
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRIENDS SCREEN -->
+    <div class="screen" id="screen-friends">
+      <div class="section-title">
+        <span>👥 Друзья</span>
+        <button class="btn btn-primary" onclick="showToast('📨 Приглашение отправлено!')" style="padding: 8px 16px; font-size: 13px;">+ Добавить</button>
+      </div>
+      <div class="friends-grid" id="friendsGrid"></div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: Create/Join Room -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Создать комнату</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============ ДАННЫЕ ============
+const content = [
+  { id: 1, title: "Дюна: Часть вторая", year: 2024, rating: 8.6, duration: "2ч 46м", genre: "Фантастика", type: "movie", videoId: "Way9Dexny3w", poster: "https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY0MNez3L.jpg", desc: "Пол Атрейдес объединяется с фрименами, чтобы отомстить заговорщикам, уничтожившим его семью." },
+  { id: 2, title: "Оппенгеймер", year: 2023, rating: 8.9, duration: "3ч 0м", genre: "Драма", type: "movie", videoId: "uYPbbksJxIg", poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", desc: "История американского учёного, который помог создать атомную бомбу." },
+  { id: 3, title: "Интерстеллар", year: 2014, rating: 9.0, duration: "2ч 49м", genre: "Фантастика", type: "movie", videoId: "zSWdZVtXT7E", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg", desc: "Команда исследователей путешествует через червоточину в космосе." },
+  { id: 4, title: "Начало", year: 2010, rating: 8.8, duration: "2ч 28м", genre: "Триллер", type: "movie", videoId: "YoHD9XEInc0", poster: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg", desc: "Опытный вор получает шанс искупить грехи, внедрив идею в разум CEO." },
+  { id: 5, title: "Побег из Шоушенка", year: 1994, rating: 9.3, duration: "2ч 22м", genre: "Драма", type: "movie", videoId: "NmzuHjWmXOc", poster: "https://image.tmdb.org/t/p/w500/9cjIGRQL6GkgQZfLqJsvBpJBb0o.jpg", desc: "Два заключённых находят утешение и спасение через акты обычной порядочности." },
+  { id: 6, title: "Тёмный рыцарь", year: 2008, rating: 9.0, duration: "2ч 32м", genre: "Боевик", type: "movie", videoId: "EXeTwQWrcwY", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911BTUOAtYH1X9c.jpg", desc: "Бэтмен сталкивается с Джокером — преступным гением, погружающим Готэм в хаос." },
+  { id: 7, title: "Матрица", year: 1999, rating: 8.7, duration: "2ч 16м", genre: "Фантастика", type: "movie", videoId: "vKQi3bBA1y8", poster: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg", desc: "Хакер узнаёт шокирующую правду о реальности и своей роли в войне против контролёров." },
+  { id: 8, title: "Паразиты", year: 2019, rating: 8.6, duration: "2ч 12м", genre: "Триллер", type: "movie", videoId: "5xH0HfJHsaY", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", desc: "Жадность и классовая дискриминация угрожают новым симбиотическим отношениям." },
+  { id: 9, title: "Игра в кальмара", year: 2021, rating: 8.0, duration: "9 серий", genre: "Триллер", type: "series", videoId: "oqxAJKy0ii4", poster: "https://image.tmdb.org/t/p/w500/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg", desc: "Сотни бедных игроков соглашаются участвовать в странных играх на выживание." },
+  { id: 10, title: "Во все тяжкие", year: 2008, rating: 9.5, duration: "5 сезонов", genre: "Драма", type: "series", videoId: "HhesaQXLuRY", poster: "https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg", desc: "Учитель химии становится производителем метамфетамина после диагноза рак." },
+  { id: 11, title: "Очень странные дела", year: 2016, rating: 8.7, duration: "4 сезона", genre: "Фантастика", type: "series", videoId: "b9EkMc79ZSU", poster: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg", desc: "Когда мальчик исчезает, город обнаруживает тайну с правительственными экспериментами." },
+  { id: 12, title: "Дом Дракона", year: 2022, rating: 8.5, duration: "2 сезона", genre: "Фэнтези", type: "series", videoId: "DotnH6dTBSY", poster: "https://image.tmdb.org/t/p/w500/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg", desc: "История дома Таргариенов за 200 лет до событий Игры престолов." },
+  { id: 13, title: "Мандалорец", year: 2019, rating: 8.7, duration: "3 сезона", genre: "Фантастика", type: "series", videoId: "aOC8E8z_ifw", poster: "https://image.tmdb.org/t/p/w500/sWgBv7LV2PRoQgkxwlibdGXKz1S.jpg", desc: "Одинокий мандалорец прокладывает путь в окраинах галактики." },
+  { id: 14, title: "Черное зеркало", year: 2011, rating: 8.8, duration: "6 сезонов", genre: "Фантастика", type: "series", videoId: "jDiYGjp5iFg", poster: "https://image.tmdb.org/t/p/w500/7PRddO7z7mcAfnlJ9sFpM3P3bGp.jpg", desc: "Антология, исследующая тёмную сторону технологий и общества." },
+  { id: 15, title: "Ведьмак", year: 2019, rating: 8.2, duration: "3 сезона", genre: "Фэнтези", type: "series", videoId: "ndl1W4ltcmg", poster: "https://image.tmdb.org/t/p/w500/cZ0d3rtvXPVvuiX22sP79K3Hmjz.jpg", desc: "Геральт из Ривии, одинокий охотник на монстров, ищет своё место в мире." },
+  { id: 16, title: "Аватар: Путь воды", year: 2022, rating: 7.8, duration: "3ч 12м", genre: "Фантастика", type: "movie", videoId: "d9MyW72ELq0", poster: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg", desc: "Джейк Салли и Нейтири создали семью и делают всё, чтобы остаться вместе." },
+  { id: 17, title: "Джон Уик 4", year: 2023, rating: 7.9, duration: "2ч 49м", genre: "Боевик", type: "movie", videoId: "qEVUtrk8_B4", poster: "https://image.tmdb.org/t/p/w500/vZloFAK7NmvMGKE7LsyLGSf2ylH.jpg", desc: "Джон Уик находит путь к поражению Высшего стола." },
+  { id: 18, title: "Человек-паук: Через вселенные", year: 2023, rating: 8.8, duration: "2ч 20м", genre: "Мультфильм", type: "movie", videoId: "cqGjhVJWtEg", poster: "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg", desc: "Майлз Моралес отправляется в путешествие по мультивселенной." },
+  { id: 19, title: "Барби", year: 2023, rating: 7.4, duration: "1ч 54м", genre: "Комедия", type: "movie", videoId: "pBk4NYhWNMM", poster: "https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg", desc: "Барби и Кен покидают Барбилэнд и оказываются в реальном мире." },
+  { id: 20, title: "Фоллаут", year: 2024, rating: 8.5, duration: "1 сезон", genre: "Фантастика", type: "series", videoId: "ZeCh5DR1fHA", poster: "https://image.tmdb.org/t/p/w500/AnsSKR4QK1JR19fPg2C2RhaPZTn.jpg", desc: "В альтернативном будущем после ядерной войны жители убежищ выходят на поверхность." }
+];
+
+const friends = [
+  { name: "Алексей", status: "online", activity: "Смотрит «Дюна: Часть вторая»", color: "linear-gradient(135deg, #8b5cf6, #ec4899)", letter: "А" },
+  { name: "Мария", status: "online", activity: "В комнате «Киновечер»", color: "linear-gradient(135deg, #3b82f6, #8b5cf6)", letter: "М" },
+  { name: "Дмитрий", status: "online", activity: "Смотрит «Оппенгеймер»", color: "linear-gradient(135deg, #f59e0b, #ec4899)", letter: "Д" },
+  { name: "Екатерина", status: "offline", activity: "Был(а) 2 часа назад", color: "linear-gradient(135deg, #10b981, #3b82f6)", letter: "Е" },
+  { name: "Никита", status: "online", activity: "Смотрит «Игра в кальмара»", color: "linear-gradient(135deg, #ec4899, #f59e0b)", letter: "Н" },
+  { name: "София", status: "offline", activity: "Был(а) вчера", color: "linear-gradient(135deg, #6366f1, #8b5cf6)", letter: "С" },
+  { name: "Артём", status: "online", activity: "В комнате «Сериалы вечером»", color: "linear-gradient(135deg, #ef4444, #f59e0b)", letter: "А" },
+  { name: "Виктория", status: "offline", activity: "Был(а) 3 дня назад", color: "linear-gradient(135deg, #8b5cf6, #3b82f6)", letter: "В" }
+];
+
+const botMessages = [
+  "Ого, какой поворот! 😱",
+  "Этот фильм — шедевр!",
+  "Кто-нибудь плачет? Я плачу 😭",
+  "Сцена просто огонь 🔥",
+  "Согласен на 100%",
+  "Ха-ха, это было смешно 😂",
+  "Мурашки по коже!",
+  "Кто ещё смотрит впервые?",
+  "Рекомендую всем!",
+  "Актёрская игра — топ 👏",
+  "Саундтрек просто бомба 🎵",
+  "Не могу оторваться!",
+  "Что будет дальше? 🤔",
+  "Это гениально!",
+  "Лучший фильм года!"
+];
+
+const botNames = ["Алексей", "Мария", "Дмитрий"];
+const botColors = [
+  "linear-gradient(135deg, #8b5cf6, #ec4899)",
+  "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+  "linear-gradient(135deg, #f59e0b, #ec4899)"
+];
+
+// ============ СОСТОЯНИЕ ============
+let currentScreen = 'home';
+let currentVideoId = null;
+let isPlaying = false;
+let featuredItem = null;
+let roomCode = generateRoomCode();
+
+// ============ ИНИЦИАЛИЗАЦИЯ ============
+function init() {
+  renderHome();
+  renderFriends();
+  renderViewers();
+  setupHero();
+  startBotChat();
+  setInterval(botChat, 8000 + Math.random() * 7000);
+}
+
+function setupHero() {
+  const featured = content[Math.floor(Math.random() * 5)];
+  featuredItem = featured;
+  document.getElementById('heroBg').style.backgroundImage = `url(${featured.poster})`;
+  document.getElementById('heroTitle').textContent = featured.title;
+  document.getElementById('heroMeta').innerHTML = `
+    <span>⭐ ${featured.rating}</span>
+    <span>📅 ${featured.year}</span>
+    <span>⏱ ${featured.duration}</span>
+    <span>🎭 ${featured.genre}</span>
+  `;
+  document.getElementById('heroDesc').textContent = featured.desc;
+}
+
+function renderHome() {
+  const trending = content.slice(0, 8);
+  const movies = content.filter(c => c.type === 'movie').slice(0, 10);
+  const series = content.filter(c => c.type === 'series').slice(0, 10);
+  const newItems = [...content].sort(() => Math.random() - 0.5).slice(0, 8);
+
+  document.getElementById('trendingRow').innerHTML = trending.map(renderCard).join('');
+  document.getElementById('moviesRow').innerHTML = movies.map(renderCard).join('');
+  document.getElementById('seriesRow').innerHTML = series.map(renderCard).join('');
+  document.getElementById('newRow').innerHTML = newItems.map(renderCard).join('');
+}
+
+function renderCard(item) {
+  return `
+    <div class="content-card" onclick="openContent(${item.id})">
+      <div class="card-poster">
+        <img src="${item.poster}" alt="${item.title}" onerror="this.style.display='none';this.parentElement.innerHTML+='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;font-size:48px;\\'>🎬</div>'">
+        <div class="card-rating">⭐ ${item.rating}</div>
+        <div class="card-overlay"></div>
+        <div class="play-icon">▶</div>
+      </div>
+      <div class="card-info">
+        <div class="card-title">${item.title}</div>
+        <div class="card-meta">${item.year} · ${item.genre}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFriends() {
+  const grid = document.getElementById('friendsGrid');
+  grid.innerHTML = friends.map((f, i) => `
+    <div class="friend-card" onclick="inviteToRoom(${i})">
+      <div class="friend-avatar" style="background: ${f.color}">
+        ${f.letter}
+        <div class="friend-status ${f.status}"></div>
+      </div>
+      <div class="friend-info">
+        <div class="friend-name">${f.name}</div>
+        <div class="friend-activity ${f.status === 'online' && f.activity.includes('Смотрит') ? 'watching' : ''}">${f.activity}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderViewers() {
+  const avatars = document.getElementById('viewersAvatars');
+  const viewers = [
+    { letter: "Г", color: "linear-gradient(135deg, #f59e0b, #ec4899)" },
+    ...friends.filter(f => f.status === 'online').slice(0, 3).map(f => ({ letter: f.letter, color: f.color }))
+  ];
+  avatars.innerHTML = viewers.map(v => 
+    `<div class="viewer-avatar" style="background: ${v.color}">${v.letter}</div>`
+  ).join('');
+  document.getElementById('viewersCount').textContent = `${viewers.length} зрителя`;
+  document.getElementById('onlineCount').textContent = viewers.length;
+}
+
+// ============ НАВИГАЦИЯ ============
+function showScreen(name) {
+  currentScreen = name;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.screen === name);
+  });
+}
+
+// ============ ДЕЙСТВИЯ С КОНТЕНТОМ ============
+function openContent(id) {
+  const item = content.find(c => c.id === id);
+  if (!item) return;
+  currentVideoId = item.videoId;
+  showScreen('room');
+  loadVideoById(item.videoId);
+  addSystemMessage(`🎬 Начат просмотр: ${item.title}`);
+  showToast(`▶ Загружено: ${item.title}`);
+}
+
+function watchFeatured() {
+  if (featuredItem) openContent(featuredItem.id);
+}
+
+function loadVideo() {
+  const input = document.getElementById('videoUrlInput').value.trim();
+  if (!input) {
+    showToast('⚠️ Введите ссылку или ID видео');
+    return;
+  }
+  const videoId = extractVideoId(input);
+  if (!videoId) {
+    showToast('❌ Неверный формат ссылки');
+    return;
+  }
+  currentVideoId = videoId;
+  loadVideoById(videoId);
+  document.getElementById('videoUrlInput').value = '';
+  addSystemMessage('🎥 Загружено новое видео');
+}
+
+function extractVideoId(input) {
+  // Прямой ID (11 символов)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  // YouTube URL
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
+  ];
+  for (const p of patterns) {
+    const m = input.match(p);
+    if (m && m[1]) return m[1];
+  }
+  return null;
+}
+
+function loadVideoById(videoId) {
+  const container = document.getElementById('videoContainer');
+  container.innerHTML = `
+    <iframe 
+      id="ytPlayer"
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" 
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      allowfullscreen>
+    </iframe>
+  `;
+  isPlaying = true;
+  document.getElementById('playBtn').textContent = '⏸';
+}
+
+function videoAction(action) {
+  const player = document.getElementById('ytPlayer');
+  if (!player) {
+    showToast('⚠️ Сначала загрузите видео');
+    return;
+  }
+  // Через postMessage API
+  if (action === 'play') {
+    // Простая симуляция — в реальности нужен YouTube IFrame API
+    showToast(isPlaying ? '⏸ Пауза (синхронно для всех)' : '▶ Воспроизведение (синхронно для всех)');
+    isPlaying = !isPlaying;
+    document.getElementById('playBtn').textContent = isPlaying ? '⏸' : '▶';
+  } else if (action === 'back') {
+    showToast('⏪ -10 секунд для всех');
+  } else if (action === 'forward') {
+    showToast('⏩ +10 секунд для всех');
+  }
+}
+
+// ============ КОМНАТА ============
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function copyRoomCode() {
+  navigator.clipboard?.writeText(roomCode).then(() => {
+    showToast('🔗 Код комнаты скопирован: ' + roomCode);
+  }).catch(() => {
+    showToast('🔗 Код комнаты: ' + roomCode);
+  });
+}
+
+function inviteFriends() {
+  showToast('📨 Приглашения отправлены друзьям!');
+}
+
+function leaveRoom() {
+  if (confirm('Выйти из комнаты?')) {
+    showScreen('home');
+    showToast('👋 Вы вышли из комнаты');
+  }
+}
+
+function inviteToRoom(idx) {
+  const f = friends[idx];
+  if (f.status === 'online') {
+    showToast(`📨 Приглашение отправлено: ${f.name}`);
+  } else {
+    showToast(`⏰ ${f.name} сейчас офлайн`);
+  }
+}
+
+// ============ ЧАТ ============
+function addMessage(name, text, color, isUser = false) {
+  const messages = document.getElementById('chatMessages');
+  const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const letter = name[0];
+  const msg = document.createElement('div');
+  msg.className = 'chat-msg';
+  msg.innerHTML = `
+    <div class="msg-avatar" style="background: ${color}">${letter}</div>
+    <div class="msg-content">
+      <div class="msg-header">
+        <span class="msg-name" style="color: ${isUser ? 'var(--accent-2)' : 'var(--text-primary)'}">${name}</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="msg-text">${escapeHtml(text)}</div>
+    </div>
+  `;
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function addSystemMessage(text) {
+  const messages = document.getElementById('chatMessages');
+  const msg = document.createElement('div');
+  msg.className = 'msg-system';
+  msg.textContent = text;
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage('Вы', text, 'linear-gradient(135deg, #f59e0b, #ec4899)', true);
+  input.value = '';
+  // Симуляция ответа
+  if (Math.random() > 0.5) {
+    setTimeout(() => {
+      const botIdx = Math.floor(Math.random() * botNames.length);
+      addMessage(botNames[botIdx], botMessages[Math.floor(Math.random() * botMessages.length)], botColors[botIdx]);
+    }, 1500 + Math.random() * 2000);
+  }
+}
+
+function startBotChat() {
+  addSystemMessage('🎉 Добро пожаловать в комнату!');
+  addSystemMessage(`🔗 Код комнаты: ${roomCode}`);
+  setTimeout(() => addMessage('Алексей', 'Привет всем! Готовы смотреть? 🍿', botColors[0]), 1000);
+  setTimeout(() => addMessage('Мария', 'Да! Давно ждала этот фильм 🎬', botColors[1]), 2500);
+  setTimeout(() => addMessage('Дмитрий', 'Погнали! 🚀', botColors[2]), 4000);
+}
+
+function botChat() {
+  if (currentScreen !== 'room') return;
+  const botIdx = Math.floor(Math.random() * botNames.length);
+  const msg = botMessages[Math.floor(Math.random() * botMessages.length)];
+  addMessage(botNames[botIdx], msg, botColors[botIdx]);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============ ПОИСК ============
+function handleSearch(query) {
+  if (!query.trim()) {
+    renderHome();
+    return;
+  }
+  const q = query.toLowerCase();
+  const results = content.filter(c => 
+    c.title.toLowerCase().includes(q) || 
+    c.genre.toLowerCase().includes(q)
+  );
+  document.getElementById('trendingRow').innerHTML = results.length 
+    ? results.map(renderCard).join('') 
+    : '<div style="padding: 40px; color: var(--text-muted); text-align: center; width: 100%;">Ничего не найдено 🔍</div>';
+  document.getElementById('moviesRow').innerHTML = '';
+  document.getElementById('seriesRow').innerHTML = '';
+  document.getElementById('newRow').innerHTML = '';
+}
+
+// ============ МОДАЛКА ============
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+// ============ TOAST ============
+function showToast(text) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<span class="toast-text">${text}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ============ СТАРТ ============
+init();
+</script>
+</body>
+</html>
