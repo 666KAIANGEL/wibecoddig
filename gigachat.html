@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PythonCamp — аналог freeCodeCamp</title>
+  <!-- Шрифты и иконки -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Шапка */
+    .navbar {
+      background: #111827;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1f2937;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: -0.5px;
+    }
+
+    .logo i {
+      margin-right: 0.5rem;
+      color: #facc15;
+    }
+
+    .badge {
+      background: #1e293b;
+      padding: 0.4rem 1rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    /* Основной контейнер */
+    .app {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    /* Боковая панель */
+    .sidebar {
+      width: 300px;
+      background: #0f172a;
+      border-right: 1px solid #1e293b;
+      padding: 1.5rem 1rem;
+      overflow-y: auto;
+      max-height: calc(100vh - 80px);
+    }
+
+    .sidebar h2 {
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+    }
+
+    .module-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .module-item {
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      background: #1e293b;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-left: 4px solid transparent;
+    }
+
+    .module-item i {
+      width: 20px;
+      color: #38bdf8;
+    }
+
+    .module-item.active {
+      background: #1e3a5f;
+      border-left-color: #38bdf8;
+      color: white;
+    }
+
+    .module-item:hover {
+      background: #2d3b52;
+    }
+
+    /* Основная область */
+    .main-content {
+      flex: 1;
+      padding: 2rem 2.5rem;
+      overflow-y: auto;
+      max-height: calc(100vh - 80px);
+      background: #0a0e1a;
+    }
+
+    .lesson-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .lesson-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a5f3fc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .lesson-desc {
+      color: #94a3b8;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .theory {
+      background: #111827;
+      padding: 1.5rem;
+      border-radius: 16px;
+      border: 1px solid #1e293b;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .theory p {
+      margin-bottom: 1rem;
+    }
+
+    .theory code {
+      background: #1e293b;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9em;
+      color: #facc15;
+    }
+
+    .theory pre {
+      background: #0f172a;
+      padding: 1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      border-left: 4px solid #38bdf8;
+    }
+
+    .theory pre code {
+      background: transparent;
+      padding: 0;
+      color: #e2e8f0;
+    }
+
+    /* Редактор и вывод */
+    .editor-section {
+      background: #0f172a;
+      border-radius: 16px;
+      border: 1px solid #1e293b;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .editor-header {
+      background: #111827;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .editor-header span {
+      font-weight: 500;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .run-btn {
+      background: #38bdf8;
+      border: none;
+      color: #0a0e1a;
+      font-weight: 600;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .run-btn:hover {
+      background: #7dd3fc;
+      transform: scale(1.02);
+    }
+
+    .run-btn i {
+      font-size: 0.9rem;
+    }
+
+    textarea.code-editor {
+      width: 100%;
+      min-height: 180px;
+      background: #0b1120;
+      border: none;
+      color: #e2e8f0;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.95rem;
+      padding: 1.25rem;
+      resize: vertical;
+      outline: none;
+      line-height: 1.5;
+    }
+
+    .output-area {
+      background: #020617;
+      border-top: 1px solid #1e293b;
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      min-height: 70px;
+      color: #a5f3fc;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .output-label {
+      color: #64748b;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Задание и проверка */
+    .challenge-box {
+      background: #111827;
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid #1e293b;
+      margin-top: 1rem;
+    }
+
+    .challenge-box h3 {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    .challenge-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .check-btn {
+      background: #22c55e;
+      border: none;
+      color: #0a0e1a;
+      font-weight: 600;
+      padding: 0.75rem 1.8rem;
+      border-radius: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: 0.2s;
+      font-size: 1rem;
+    }
+
+    .check-btn:hover {
+      background: #4ade80;
+      transform: scale(1.02);
+    }
+
+    .result-message {
+      font-weight: 500;
+      padding: 0.75rem 1.25rem;
+      border-radius: 40px;
+      background: #1e293b;
+      color: #cbd5e1;
+      display: inline-block;
+    }
+
+    .result-message.success {
+      background: #064e3b;
+      color: #a7f3d0;
+    }
+
+    .result-message.error {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+
+    .next-btn {
+      background: #6366f1;
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 1.8rem;
+      border-radius: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: 0.2s;
+      font-size: 1rem;
+    }
+
+    .next-btn:hover {
+      background: #818cf8;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Адаптив */
+    @media (max-width: 800px) {
+      .sidebar {
+        width: 100%;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid #1e293b;
+      }
+      .app {
+        flex-direction: column;
+      }
+      .main-content {
+        padding: 1.5rem;
+        max-height: none;
+      }
+      .navbar {
+        padding: 1rem;
+      }
+      .logo {
+        font-size: 1.4rem;
+      }
+    }
+
+    /* Скроллбар */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Шапка -->
+<nav class="navbar">
+  <div class="logo">
+    <i class="fab fa-python"></i> PythonCamp
+  </div>
+  <div class="badge">
+    <i class="fas fa-code"></i> интерактивный курс Python
+  </div>
+</nav>
+
+<!-- Приложение -->
+<div class="app">
+  <!-- Боковая панель -->
+  <aside class="sidebar">
+    <h2><i class="fas fa-book-open"></i> Модули</h2>
+    <div class="module-list" id="moduleList">
+      <!-- Генерируется через JS -->
+    </div>
+  </aside>
+
+  <!-- Основной контент -->
+  <main class="main-content" id="mainContent">
+    <!-- Динамическое содержимое -->
+  </main>
+</div>
+
+<script>
+  // ========================
+  // ДАННЫЕ КУРСА (аналог freeCodeCamp)
+  // ========================
+  const courseData = [
+    {
+      id: 'intro',
+      title: 'Введение в Python',
+      icon: 'fa-rocket',
+      theory: `
+        <p><strong>Python</strong> — это высокоуровневый язык программирования общего назначения, который отличается простым и читаемым синтаксисом. Он широко используется в веб-разработке, анализе данных, искусственном интеллекте и автоматизации.</p>
+        <p>В Python не нужно объявлять типы переменных — они определяются автоматически. Вот простой пример:</p>
+        <pre><code># Мой первый код на Python
+print("Привет, мир!")</code></pre>
+        <p>Функция <code>print()</code> выводит текст на экран. Строки заключаются в кавычки.</p>
+      `,
+      initialCode: '# Напишите код, который выводит "Привет, Python!"\n# Используйте функцию print()\n\n',
+      challenge: 'Выведите на экран фразу "Привет, Python!" (без кавычек).',
+      check: (output) => output.trim() === 'Привет, Python!',
+      hint: 'Не забудьте про кавычки внутри print().'
+    },
+    {
+      id: 'variables',
+      title: 'Переменные и типы данных',
+      icon: 'fa-cube',
+      theory: `
+        <p><strong>Переменная</strong> — это именованное место в памяти для хранения данных. В Python переменные создаются простым присваиванием:</p>
+        <pre><code>name = "Алексей"
+age = 25
+is_student = True</code></pre>
+        <p>Основные типы данных: <code>int</code> (целые числа), <code>float</code> (дробные), <code>str</code> (строки), <code>bool</code> (логический).</p>
+        <p>Python — динамически типизированный язык: тип переменной определяется во время выполнения.</p>
+      `,
+      initialCode: '# Создайте переменную my_name и присвойте ей ваше имя\n# Затем выведите её с помощью print()\n\n',
+      challenge: 'Создайте переменную <code>my_name</code> со значением "Python" и выведите её на экран.',
+      check: (output) => output.trim() === 'Python',
+      hint: 'Пример: my_name = "Python", затем print(my_name)'
+    },
+    {
+      id: 'math',
+      title: 'Арифметические операции',
+      icon: 'fa-calculator',
+      theory: `
+        <p>Python поддерживает все основные математические операции:</p>
+        <pre><code>a = 10
+b = 3
+print(a + b)   # 13 (сложение)
+print(a - b)   # 7  (вычитание)
+print(a * b)   # 30 (умножение)
+print(a / b)   # 3.333... (деление)
+print(a // b)  # 3  (целочисленное деление)
+print(a % b)   # 1  (остаток)
+print(a ** b)  # 1000 (возведение в степень)</code></pre>
+      `,
+      initialCode: '# Вычислите 7 * 8 и выведите результат\n\n',
+      challenge: 'Напишите код, который выводит результат умножения 7 на 8 (число 56).',
+      check: (output) => output.trim() === '56',
+      hint: 'Используйте print(7 * 8)'
+    },
+    {
+      id: 'strings',
+      title: 'Строки и их методы',
+      icon: 'fa-font',
+      theory: `
+        <p>Строки в Python — это последовательности символов. С ними можно делать многое:</p>
+        <pre><code>text = "Python"
+print(len(text))          # 6 (длина)
+print(text.upper())       # PYTHON
+print(text.lower())       # python
+print(text[0])            # P (индексация)
+print(text[2:5])          # tho (срез)</code></pre>
+        <p>Конкатенация (сложение) строк: <code>"Привет, " + "мир!"</code></p>
+      `,
+      initialCode: '# Создайте строку s = "freeCodeCamp"\n# Выведите её длину с помощью len()\n\n',
+      challenge: 'Создайте переменную <code>s</code> со значением "freeCodeCamp" и выведите её длину (12).',
+      check: (output) => output.trim() === '12',
+      hint: 'print(len(s))'
+    },
+    {
+      id: 'conditionals',
+      title: 'Условные операторы',
+      icon: 'fa-code-branch',
+      theory: `
+        <p>Условные операторы позволяют выполнять код в зависимости от условий:</p>
+        <pre><code>x = 10
+if x > 5:
+    print("x больше 5")
+elif x == 5:
+    print("x равно 5")
+else:
+    print("x меньше 5")</code></pre>
+        <p>Операторы сравнения: <code>==</code>, <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>.</p>
+      `,
+      initialCode: '# Проверьте, является ли число 15 чётным\n# Выведите "Чётное" или "Нечётное"\n\n',
+      challenge: 'Напишите код, который проверяет число 15. Если оно чётное — выведите "Чётное", иначе "Нечётное".',
+      check: (output) => output.trim() === 'Нечётное',
+      hint: 'Используйте if num % 2 == 0: ... else: ...'
+    },
+    {
+      id: 'loops',
+      title: 'Циклы',
+      icon: 'fa-redo-alt',
+      theory: `
+        <p>Циклы позволяют повторять код несколько раз.</p>
+        <p><strong>Цикл for</strong> — для перебора последовательностей:</p>
+        <pre><code>for i in range(5):
+    print(i)  # 0,1,2,3,4</code></pre>
+        <p><strong>Цикл while</strong> — выполняется, пока условие истинно:</p>
+        <pre><code>count = 0
+while count < 3:
+    print(count)
+    count += 1</code></pre>
+      `,
+      initialCode: '# Выведите числа от 1 до 5 с помощью цикла for\n\n',
+      challenge: 'Используя цикл, выведите числа от 1 до 5, каждое с новой строки.',
+      check: (output) => {
+        const lines = output.trim().split('\n').map(l => l.trim());
+        return lines.length === 5 && lines[0] === '1' && lines[4] === '5';
+      },
+      hint: 'for i in range(1, 6): print(i)'
+    },
+    {
+      id: 'functions',
+      title: 'Функции',
+      icon: 'fa-function',
+      theory: `
+        <p><strong>Функция</strong> — это блок кода, который можно вызывать многократно. Определяется с помощью <code>def</code>:</p>
+        <pre><code>def greet(name):
+    return "Привет, " + name + "!"
+
+print(greet("Мир"))  # Привет, Мир!</code></pre>
+        <p>Функции помогают избежать дублирования кода и делают программу структурированной.</p>
+      `,
+      initialCode: '# Определите функцию square(x), возвращающую x*x\n# Выведите square(7)\n\n',
+      challenge: 'Создайте функцию <code>square(x)</code>, которая возвращает квадрат числа. Выведите результат для 7 (должно быть 49).',
+      check: (output) => output.trim() === '49',
+      hint: 'def square(x): return x * x, затем print(square(7))'
+    },
+    {
+      id: 'lists',
+      title: 'Списки',
+      icon: 'fa-list',
+      theory: `
+        <p><strong>Список</strong> — упорядоченная изменяемая коллекция элементов:</p>
+        <pre><code>fruits = ["яблоко", "банан", "вишня"]
+print(fruits[0])      # яблоко
+fruits.append("апельсин")
+print(len(fruits))    # 4
+print(fruits[-1])     # апельсин</code></pre>
+        <p>Списки могут содержать элементы разных типов.</p>
+      `,
+      initialCode: '# Создайте список numbers = [10, 20, 30, 40]\n# Выведите сумму всех элементов\n\n',
+      challenge: 'Создайте список <code>[10, 20, 30, 40]</code> и выведите его сумму (100).',
+      check: (output) => output.trim() === '100',
+      hint: 'sum([10, 20, 30, 40]) или сложите вручную'
+    }
+  ];
+
+  // ========================
+  // СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+  // ========================
+  let currentModuleId = courseData[0].id;
+  let completedModules = new Set(); // id пройденных модулей
+
+  // DOM элементы
+  const moduleListEl = document.getElementById('moduleList');
+  const mainContentEl = document.getElementById('mainContent');
+
+  // ========================
+  // ОТРИСОВКА БОКОВОЙ ПАНЕЛИ
+  // ========================
+  function renderSidebar() {
+    moduleListEl.innerHTML = '';
+    courseData.forEach((module, index) => {
+      const div = document.createElement('div');
+      div.className = `module-item ${module.id === currentModuleId ? 'active' : ''}`;
+      const isDone = completedModules.has(module.id);
+      div.innerHTML = `
+        <i class="fas ${module.icon}"></i>
+        <span>${module.title}</span>
+        ${isDone ? '<i class="fas fa-check-circle" style="margin-left: auto; color: #22c55e;"></i>' : ''}
+      `;
+      div.addEventListener('click', () => {
+        currentModuleId = module.id;
+        renderSidebar();
+        renderMain();
+      });
+      moduleListEl.appendChild(div);
+    });
+  }
+
+  // ========================
+  // ЗАГРУЗКА PYODIDE (Python в браузере)
+  // ========================
+  let pyodideReady = false;
+  let pyodideInstance = null;
+
+  async function initPyodide() {
+    try {
+      // Загружаем Pyodide из CDN
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+      document.head.appendChild(script);
+      
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = reject;
+      });
+
+      pyodideInstance = await loadPyodide({
+        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'
+      });
+      pyodideReady = true;
+      console.log('Pyodide загружен');
+      // Обновляем UI, если уже отрисовано
+      const runBtn = document.querySelector('.run-btn');
+      if (runBtn) runBtn.disabled = false;
+    } catch (e) {
+      console.error('Ошибка загрузки Pyodide:', e);
+      alert('Не удалось загрузить Python-среду. Проверьте интернет-соединение и перезагрузите страницу.');
+    }
+  }
+
+  // ========================
+  // ВЫПОЛНЕНИЕ PYTHON КОДА
+  // ========================
+  async function runPythonCode(code) {
+    if (!pyodideReady || !pyodideInstance) {
+      return '# Python ещё загружается... Пожалуйста, подождите.';
+    }
+
+    try {
+      // Перенаправляем stdout в строку
+      pyodideInstance.runPython(`
+        import sys
+        import io
+        sys.stdout = io.StringIO()
+      `);
+
+      // Выполняем код пользователя
+      pyodideInstance.runPython(code);
+
+      // Получаем вывод
+      const output = pyodideInstance.runPython('sys.stdout.getvalue()');
+      return output;
+    } catch (error) {
+      return `# Ошибка выполнения:\n${error.message}`;
+    }
+  }
+
+  // ========================
+  // ОТРИСОВКА ГЛАВНОГО КОНТЕНТА
+  // ========================
+  function renderMain() {
+    const module = courseData.find(m => m.id === currentModuleId);
+    if (!module) return;
+
+    const isDone = completedModules.has(module.id);
+    const nextIndex = courseData.findIndex(m => m.id === module.id) + 1;
+    const hasNext = nextIndex < courseData.length;
+
+    mainContentEl.innerHTML = `
+      <div class="lesson-header">
+        <h1><i class="fas ${module.icon}" style="margin-right: 0.75rem; color: #38bdf8;"></i>${module.title}</h1>
+        <div class="lesson-desc">Модуль ${courseData.findIndex(m => m.id === module.id) + 1} из ${courseData.length}</div>
+      </div>
+
+      <div class="theory">
+        ${module.theory}
+      </div>
+
+      <div class="editor-section">
+        <div class="editor-header">
+          <span><i class="fas fa-code"></i> Редактор Python</span>
+          <button class="run-btn" id="runBtn" ${!pyodideReady ? 'disabled' : ''}>
+            <i class="fas fa-play"></i> Запустить
+          </button>
+        </div>
+        <textarea class="code-editor" id="codeEditor" spellcheck="false">${module.initialCode}</textarea>
+        <div class="output-area">
+          <div class="output-label"><i class="fas fa-terminal"></i> Вывод</div>
+          <div id="outputContent">Нажмите «Запустить», чтобы выполнить код</div>
+        </div>
+      </div>
+
+      <div class="challenge-box">
+        <h3><i class="fas fa-tasks"></i> Задание</h3>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">${module.challenge}</p>
+        <div class="challenge-actions">
+          <button class="check-btn" id="checkBtn"><i class="fas fa-check-circle"></i> Проверить</button>
+          <span class="result-message" id="resultMessage">Ожидание проверки</span>
+          ${hasNext ? `<button class="next-btn" id="nextBtn" ${!isDone ? 'disabled style="opacity:0.5; pointer-events:none;"' : ''}><i class="fas fa-arrow-right"></i> Следующий модуль</button>` : ''}
+        </div>
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: #94a3b8;"><i class="fas fa-lightbulb"></i> Подсказка: ${module.hint}</p>
+      </div>
+    `;
+
+    // Привязываем события
+    const runBtn = document.getElementById('runBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const codeEditor = document.getElementById('codeEditor');
+    const outputContent = document.getElementById('outputContent');
+    const resultMessage = document.getElementById('resultMessage');
+
+    // Запуск кода
+    runBtn.addEventListener('click', async () => {
+      if (!pyodideReady) {
+        outputContent.textContent = '# Python ещё загружается, подождите...';
+        return;
+      }
+      outputContent.textContent = '# Выполняется...';
+      const code = codeEditor.value;
+      const output = await runPythonCode(code);
+      outputContent.textContent = output || '(нет вывода)';
+    });
+
+    // Проверка задания
+    checkBtn.addEventListener('click', async () => {
+      if (!pyodideReady) {
+        resultMessage.textContent = 'Python ещё загружается...';
+        resultMessage.className = 'result-message error';
+        return;
+      }
+
+      const code = codeEditor.value;
+      const output = await runPythonCode(code);
+      outputContent.textContent = output || '(нет вывода)';
+
+      const passed = module.check(output);
+      if (passed) {
+        resultMessage.textContent = '✅ Задание выполнено! Модуль пройден.';
+        resultMessage.className = 'result-message success';
+        completedModules.add(module.id);
+        renderSidebar(); // обновить галочку
+
+        // Активируем кнопку "Следующий"
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.style.opacity = '1';
+          nextBtn.style.pointerEvents = 'auto';
+        }
+      } else {
+        resultMessage.textContent = '❌ Неверно. Попробуйте ещё раз.';
+        resultMessage.className = 'result-message error';
+      }
+    });
+
+    // Переход к следующему модулю
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const nextModule = courseData[nextIndex];
+        if (nextModule) {
+          currentModuleId = nextModule.id;
+          renderSidebar();
+          renderMain();
+        }
+      });
+    }
+
+    // Если модуль уже пройден, разблокируем кнопку "Следующий"
+    if (isDone && nextBtn) {
+      nextBtn.disabled = false;
+      nextBtn.style.opacity = '1';
+      nextBtn.style.pointerEvents = 'auto';
+    }
+  }
+
+  // ========================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ========================
+  async function init() {
+    // Рисуем начальный интерфейс
+    renderSidebar();
+    renderMain();
+    
+    // Загружаем Pyodide асинхронно
+    await initPyodide();
+
+    // После загрузки Pyodide обновляем кнопку "Запустить", если она есть
+    const runBtn = document.getElementById('runBtn');
+    if (runBtn) {
+      runBtn.disabled = false;
+    }
+    // Перерисовываем главную, чтобы кнопка стала активной
+    renderMain();
+  }
+
+  init();
+</script>
+</body>
+</html>

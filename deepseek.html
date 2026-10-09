@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PythonCamp — интерактивный курс Python</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg: #0a0e1a;
+    --bg-secondary: #0f172a;
+    --bg-tertiary: #111827;
+    --border: #1e293b;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --primary: #38bdf8;
+    --primary-hover: #7dd3fc;
+    --success: #22c55e;
+    --success-bg: #064e3b;
+    --error: #ef4444;
+    --error-bg: #7f1d1d;
+    --warning: #facc15;
+    --accent: #6366f1;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* NAVBAR */
+  .navbar {
+    background: var(--bg-tertiary);
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .logo i { color: var(--warning); font-size: 1.7rem; }
+
+  .nav-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .stat-badge {
+    background: var(--bg-secondary);
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border);
+  }
+
+  .stat-badge strong { color: var(--primary); }
+
+  .progress-bar-wrapper {
+    width: 150px;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--success));
+    width: 0%;
+    transition: width 0.4s ease;
+    border-radius: 10px;
+  }
+
+  /* LAYOUT */
+  .app {
+    display: flex;
+    flex: 1;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 320px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+    position: sticky;
+    top: 60px;
+    flex-shrink: 0;
+    transition: transform 0.3s;
+  }
+
+  .sidebar-header {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .module-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .module-item {
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    transition: all 0.15s;
+    font-size: 0.9rem;
+    border-left: 3px solid transparent;
+    color: var(--text-muted);
+    position: relative;
+  }
+
+  .module-item:hover {
+    background: var(--bg-tertiary);
+    color: var(--text);
+  }
+
+  .module-item.active {
+    background: linear-gradient(90deg, rgba(56,189,248,0.15), transparent);
+    border-left-color: var(--primary);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .module-item.completed { color: var(--text); }
+
+  .module-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .module-item.active .module-num {
+    background: var(--primary);
+    color: var(--bg);
+    border-color: var(--primary);
+  }
+
+  .module-item.completed .module-num {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+
+  .module-item.completed .module-num::before {
+    content: '✓';
+  }
+
+  .module-item.completed .module-num span { display: none; }
+
+  .module-title { flex: 1; }
+
+  /* MAIN */
+  .main-content {
+    flex: 1;
+    padding: 2rem 2.5rem;
+    overflow-y: auto;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .lesson-header {
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .lesson-number {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+  }
+
+  .lesson-header h1 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .lesson-header h1 i { color: var(--primary); }
+
+  .lesson-desc {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* THEORY */
+  .theory {
+    background: var(--bg-tertiary);
+    padding: 1.75rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .theory h3 {
+    color: var(--primary);
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .theory p { margin-bottom: 1rem; color: var(--text); }
+  .theory p:last-child { margin-bottom: 0; }
+  .theory ul { margin: 1rem 0 1rem 1.5rem; }
+  .theory li { margin-bottom: 0.5rem; color: var(--text-muted); }
+  .theory strong { color: var(--warning); }
+
+  .theory code {
+    background: var(--bg-secondary);
+    padding: 0.15rem 0.45rem;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    color: var(--warning);
+    border: 1px solid var(--border);
+  }
+
+  .theory pre {
+    background: var(--bg);
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border-left: 3px solid var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .theory pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--text);
+    border: none;
+    font-size: 1em;
+  }
+
+  /* EDITOR */
+  .editor-section {
+    background: var(--bg-secondary);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .editor-header {
+    background: var(--bg-tertiary);
+    padding: 0.7rem 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .editor-dots {
+    display: flex;
+    gap: 0.4rem;
+    margin-right: 0.75rem;
+  }
+
+  .dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+
+  .editor-title {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+
+  .btn {
+    border: none;
+    font-weight: 600;
+    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.15s;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  .btn-run {
+    background: var(--primary);
+    color: var(--bg);
+  }
+
+  .btn-run:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+  }
+
+  .btn-check {
+    background: var(--success);
+    color: white;
+    padding: 0.65rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .btn-check:hover:not(:disabled) {
+    background: #4ade80;
+    transform: translateY(-1px);
+  }
+
+  .btn-next {
+    background: var(--accent);
+    color: white;
+    padding: 0.65rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .btn-next:hover:not(:disabled) {
+    background: #818cf8;
+    transform: translateY(-1px);
+  }
+
+  .btn-reset {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-reset:hover { background: var(--bg-tertiary); color: var(--text); }
+
+  .code-editor {
+    width: 100%;
+    min-height: 200px;
+    background: var(--bg);
+    border: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    padding: 1.1rem 1.25rem;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+    tab-size: 4;
+  }
+
+  .code-editor::selection { background: rgba(56,189,248,0.3); }
+
+  .output-area {
+    background: #050810;
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    min-height: 60px;
+    max-height: 250px;
+    overflow-y: auto;
+    color: var(--primary);
+    line-height: 1.5;
+  }
+
+  .output-label {
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+  }
+
+  .output-error { color: var(--error); }
+
+  /* CHALLENGE */
+  .challenge-box {
+    background: var(--bg-tertiary);
+    border-radius: 14px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.6s ease;
+    border-left: 4px solid var(--warning);
+  }
+
+  .challenge-box h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+    color: var(--warning);
+    font-size: 1.05rem;
+  }
+
+  .challenge-text {
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .challenge-text code {
+    background: var(--bg-secondary);
+    padding: 0.15rem 0.4rem;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    color: var(--warning);
+  }
+
+  .challenge-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .result-message {
+    font-weight: 500;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border);
+  }
+
+  .result-message.success {
+    background: var(--success-bg);
+    color: #a7f3d0;
+    border-color: rgba(34,197,94,0.3);
+  }
+
+  .result-message.error {
+    background: var(--error-bg);
+    color: #fecaca;
+    border-color: rgba(239,68,68,0.3);
+  }
+
+  .hint-box {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-left: 3px solid var(--accent);
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .hint-box i { color: var(--accent); margin-top: 0.15rem; }
+
+  /* SUCCESS MODAL */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+    padding: 1rem;
+  }
+
+  .success-modal {
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    padding: 2.5rem;
+    text-align: center;
+    max-width: 420px;
+    border: 1px solid var(--border);
+    animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .success-modal .emoji { font-size: 3.5rem; margin-bottom: 1rem; }
+  .success-modal h2 { color: var(--success); margin-bottom: 0.75rem; font-size: 1.5rem; }
+  .success-modal p { color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6; }
+
+  /* MOBILE */
+  .mobile-toggle {
+    display: none;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      height: calc(100vh - 60px);
+      z-index: 90;
+      transform: translateX(-100%);
+      width: 290px;
+    }
+    .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+    .mobile-toggle { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .main-content { padding: 1.25rem; }
+    .lesson-header h1 { font-size: 1.4rem; }
+    .theory { padding: 1.25rem; }
+    .progress-bar-wrapper { display: none; }
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+  .loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .py-loading-banner {
+    background: linear-gradient(90deg, rgba(250,204,21,0.15), rgba(250,204,21,0.05));
+    border: 1px solid rgba(250,204,21,0.3);
+    color: var(--warning);
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
+    <div class="logo">
+      <i class="fab fa-python"></i> PythonCamp
+    </div>
+  </div>
+  <div class="nav-stats">
+    <div class="stat-badge">
+      <i class="fas fa-trophy" style="color: var(--warning);"></i>
+      <span>Пройдено: <strong id="completedCount">0</strong>/<span id="totalCount">12</span></span>
+    </div>
+    <div class="progress-bar-wrapper">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span><i class="fas fa-book"></i> Модули курса</span>
+    </div>
+    <div class="module-list" id="moduleList"></div>
+  </aside>
+
+  <main class="main-content" id="mainContent"></main>
+</div>
+
+<script>
+// ============================================================
+// ДАННЫЕ КУРСА — 12 модулей Python с нуля до продвинутого уровня
+// ============================================================
+const courseData = [
+  {
+    id: 'intro',
+    title: 'Введение в Python',
+    icon: 'fa-rocket',
+    desc: 'Узнайте, что такое Python и напишите первую программу.',
+    theory: `
+      <h3><i class="fas fa-info-circle"></i> Что такое Python?</h3>
+      <p><strong>Python</strong> — это высокоуровневый язык программирования общего назначения, известный своим простым и читаемым синтаксисом. Он используется в веб-разработке, анализе данных, машинном обучении, автоматизации и научных исследованиях.</p>
+      <h3><i class="fas fa-star"></i> Первая программа</h3>
+      <p>Функция <code>print()</code> выводит текст на экран. Строки заключаются в кавычки — одинарные или двойные:</p>
+      <pre><code>print("Привет, мир!")
+print('Python — это круто')</code></pre>
+      <p>Python — интерпретируемый язык: код выполняется строка за строкой сверху вниз.</p>
+    `,
+    initialCode: `# Напишите код, который выводит "Привет, Python!"\n# Используйте функцию print()\n\n`,
+    challenge: 'Выведите на экран фразу <code>Привет, Python!</code> (без кавычек).',
+    hint: 'Используйте print("Привет, Python!")',
+    check: (output) => output.trim() === 'Привет, Python!'
+  },
+  {
+    id: 'variables',
+    title: 'Переменные и типы данных',
+    icon: 'fa-cube',
+    desc: 'Научитесь хранить данные в переменных разных типов.',
+    theory: `
+      <h3><i class="fas fa-box"></i> Переменные</h3>
+      <p><strong>Переменная</strong> — именованная область памяти для хранения данных. В Python переменные создаются простым присваиванием, без указания типа:</p>
+      <pre><code>name = "Алексей"
+age = 25
+height = 1.82
+is_student = True</code></pre>
+      <h3><i class="fas fa-shapes"></i> Основные типы данных</h3>
+      <ul>
+        <li><code>int</code> — целые числа: <code>42</code>, <code>-7</code></li>
+        <li><code>float</code> — дробные числа: <code>3.14</code></li>
+        <li><code>str</code> — строки: <code>"привет"</code></li>
+        <li><code>bool</code> — логический тип: <code>True</code> / <code>False</code></li>
+      </ul>
+      <p>Python — динамически типизированный язык: тип определяется автоматически во время выполнения.</p>
+    `,
+    initialCode: `# Создайте переменную my_name и присвойте ей значение "Python"\n# Затем выведите её на экран\n\n`,
+    challenge: 'Создайте переменную <code>my_name</code> со значением "Python" и выведите её содержимое.',
+    hint: 'my_name = "Python"\nprint(my_name)',
+    check: (output) => output.trim() === 'Python'
+  },
+  {
+    id: 'math',
+    title: 'Арифметические операции',
+    icon: 'fa-calculator',
+    desc: 'Освойте математические операции в Python.',
+    theory: `
+      <h3><i class="fas fa-plus-minus"></i> Основные операторы</h3>
+      <pre><code>a = 10
+b = 3
+print(a + b)   # 13 — сложение
+print(a - b)   # 7  — вычитание
+print(a * b)   # 30 — умножение
+print(a / b)   # 3.333... — деление
+print(a // b)  # 3  — целочисленное деление
+print(a % b)   # 1  — остаток от деления
+print(a ** b)  # 1000 — возведение в степень</code></pre>
+      <p>Порядок операций такой же, как в математике: сначала степень, потом умножение/деление, затем сложение/вычитание. Скобки меняют порядок.</p>
+    `,
+    initialCode: `# Вычислите произведение 7 и 8\n# Выведите результат с помощью print()\n\n`,
+    challenge: 'Выведите результат умножения <code>7</code> на <code>8</code> — должно получиться <code>56</code>.',
+    hint: 'print(7 * 8)',
+    check: (output) => output.trim() === '56'
+  },
+  {
+    id: 'strings',
+    title: 'Строки и их методы',
+    icon: 'fa-font',
+    desc: 'Работа со строками: индексация, срезы, методы.',
+    theory: `
+      <h3><i class="fas fa-quote-right"></i> Строки в Python</h3>
+      <p>Строка — это последовательность символов. С ней можно делать много операций:</p>
+      <pre><code>text = "Python"
+print(len(text))       # 6 — длина строки
+print(text.upper())    # PYTHON
+print(text.lower())    # python
+print(text[0])         # P — первый символ
+print(text[-1])        # n — последний символ
+print(text[2:5])       # tho — срез с 2 по 4</code></pre>
+      <h3><i class="fas fa-plus"></i> Конкатенация</h3>
+      <p>Строки можно складывать: <code>"Привет, " + "мир!"</code> → <code>"Привет, мир!"</code></p>
+      <p>F-строки для вставки значений: <code>f"Меня зовут {name}"</code></p>
+    `,
+    initialCode: `# Создайте строку s = "freeCodeCamp"\n# Выведите её длину с помощью len()\n\n`,
+    challenge: 'Создайте переменную <code>s</code> со значением "freeCodeCamp" и выведите её длину (должно быть <code>12</code>).',
+    hint: 's = "freeCodeCamp"\nprint(len(s))',
+    check: (output) => output.trim() === '12'
+  },
+  {
+    id: 'conditionals',
+    title: 'Условные операторы',
+    icon: 'fa-code-branch',
+    desc: 'Ветвление программы с помощью if, elif, else.',
+    theory: `
+      <h3><i class="fas fa-split"></i> Оператор if</h3>
+      <p>Условные операторы позволяют выполнять разный код в зависимости от условий:</p>
+      <pre><code>x = 10
+if x > 5:
+    print("x больше 5")
+elif x == 5:
+    print("x равно 5")
+else:
+    print("x меньше 5")</code></pre>
+      <h3><i class="fas fa-equals"></i> Операторы сравнения</h3>
+      <ul>
+        <li><code>==</code> — равно</li>
+        <li><code>!=</code> — не равно</li>
+        <li><code>&gt;</code>, <code>&lt;</code> — больше, меньше</li>
+        <li><code>&gt;=</code>, <code>&lt;=</code> — больше или равно, меньше или равно</li>
+      </ul>
+      <p>Логические операторы: <code>and</code>, <code>or</code>, <code>not</code>.</p>
+      <p><strong>Важно:</strong> отступы в Python обязательны — они определяют блоки кода!</p>
+    `,
+    initialCode: `# Проверьте, является ли число 15 чётным\n# Выведите "Чётное" или "Нечётное"\nnum = 15\n\n`,
+    challenge: 'Напишите код, который проверяет число <code>15</code>. Если оно чётное — выведите <code>Чётное</code>, иначе <code>Нечётное</code>.',
+    hint: 'if num % 2 == 0:\n    print("Чётное")\nelse:\n    print("Нечётное")',
+    check: (output) => output.trim() === 'Нечётное'
+  },
+  {
+    id: 'loops',
+    title: 'Циклы',
+    icon: 'fa-redo-alt',
+    desc: 'Повторяйте код с помощью for и while.',
+    theory: `
+      <h3><i class="fas fa-rotate"></i> Цикл for</h3>
+      <p>Используется для перебора последовательностей:</p>
+      <pre><code>for i in range(5):
+    print(i)   # 0, 1, 2, 3, 4
+
+for fruit in ["яблоко", "банан"]:
+    print(fruit)</code></pre>
+      <h3><i class="fas fa-infinity"></i> Цикл while</h3>
+      <p>Выполняется, пока условие истинно:</p>
+      <pre><code>count = 0
+while count < 3:
+    print(count)
+    count += 1   # важно: изменяем переменную!</code></pre>
+      <p><code>range(1, 6)</code> создаёт последовательность 1, 2, 3, 4, 5.</p>
+    `,
+    initialCode: `# Используя цикл for, выведите числа от 1 до 5\n# Каждое число — с новой строки\n\n`,
+    challenge: 'Выведите числа от <code>1</code> до <code>5</code> включительно, каждое на новой строке.',
+    hint: 'for i in range(1, 6):\n    print(i)',
+    check: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.length === 5 && lines[0] === '1' && lines[4] === '5';
+    }
+  },
+  {
+    id: 'functions',
+    title: 'Функции',
+    icon: 'fa-function',
+    desc: 'Создавайте переиспользуемые блоки кода.',
+    theory: `
+      <h3><i class="fas fa-cube"></i> Определение функции</h3>
+      <p><strong>Функция</strong> — блок кода, который можно вызывать многократно. Определяется с помощью <code>def</code>:</p>
+      <pre><code>def greet(name):
+    return "Привет, " + name + "!"
+
+result = greet("Мир")
+print(result)   # Привет, Мир!</code></pre>
+      <h3><i class="fas fa-arrow-return-left"></i> return vs print</h3>
+      <p><code>return</code> возвращает значение из функции, <code>print</code> просто выводит его. Возвращённое значение можно использовать дальше.</p>
+      <h3><i class="fas fa-sliders"></i> Параметры по умолчанию</h3>
+      <pre><code>def power(x, n=2):
+    return x ** n
+
+print(power(3))     # 9
+print(power(2, 3))  # 8</code></pre>
+    `,
+    initialCode: `# Определите функцию square(x), возвращающую квадрат числа x\n# Затем выведите square(7)\n\n`,
+    challenge: 'Создайте функцию <code>square(x)</code>, возвращающую квадрат числа. Выведите результат для <code>7</code> (должно быть <code>49</code>).',
+    hint: 'def square(x):\n    return x * x\nprint(square(7))',
+    check: (output) => output.trim() === '49'
+  },
+  {
+    id: 'lists',
+    title: 'Списки',
+    icon: 'fa-list',
+    desc: 'Храните коллекции данных в списках.',
+    theory: `
+      <h3><i class="fas fa-list-ul"></i> Создание списка</h3>
+      <p><strong>Список</strong> — упорядоченная изменяемая коллекция:</p>
+      <pre><code>fruits = ["яблоко", "банан", "вишня"]
+print(fruits[0])          # яблоко
+print(fruits[-1])         # вишня
+fruits.append("апельсин") # добавить в конец
+print(len(fruits))        # 4
+fruits[0] = "груша"       # изменить элемент</code></pre>
+      <h3><i class="fas fa-tools"></i> Полезные функции</h3>
+      <ul>
+        <li><code>sum(list)</code> — сумма элементов</li>
+        <li><code>max(list)</code>, <code>min(list)</code> — максимум/минимум</li>
+        <li><code>sorted(list)</code> — сортировка</li>
+        <li><code>list.append(x)</code> — добавить элемент</li>
+        <li><code>list.pop()</code> — удалить последний</li>
+      </ul>
+    `,
+    initialCode: `# 
